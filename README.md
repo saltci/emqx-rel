@@ -1,96 +1,77 @@
-# emqx-rel
+# Introduction
+This chart bootstraps an emqx deployment on a Kubernetes cluster using the Helm package manager. 
 
+# Prerequisites
++ Kubernetes 1.6+
++ Helm
 
-The Release Project for EMQ X Broker.
+# Installing the Chart
+To install the chart with the release name `my-emqx`:
 
-NOTICE: Requires Erlang/OTP 21.3 .. 22 to build since EMQ X 3.2
++   From github 
+    ```
+    $ git clone https://github.com/emqx/emqx-rel.git
+    $ cd emqx-rel/deploy/charts/emqx
+    $ helm install my-emqx .
+    ```
 
-EMQ X no longer uses this repository since version 4.3. Use https://github.com/emqx/emqx/ instead.
++   From chart repos
+    ```
+    helm repo add emqx https://repos.emqx.io/charts
+    helm install my-emqx emqx/emqx
+    ```
+    > If you want to install an unstable version, you need to add `--devel` when you execute the `helm install` command.
 
-
-There are 4 target profiles for building emqx-rel: emqx, emqx-pkg, emqx-edge,and emqx-edge-pkg. The default target profile is emqx. User can build specified target release by execute command `make ${target-release}` in emqx_rel.
-
-## rebar3
-
-This project has rebar3 (compiled from OTP 21.3) included.
-
-## Build on Linux/Unix/Mac
-
-```shell
-$ git clone https://github.com/emqx/emqx-rel.git emqx-rel
-$ cd emqx-rel
-$ git checkout $(git describe --tags $(git rev-list --tags --max-count=1))
-$ make
-$ ./_build/emqx/rel/emqx/bin/emqx console
+# Uninstalling the Chart
+To uninstall/delete the `my-emqx` deployment:
+```
+$ helm del  my-emqx
 ```
 
-## Build rpm or deb package on Linux
-```shell
-$ git clone https://github.com/emqx/emqx-rel.git emqx-rel
-$ cd emqx-rel
-$ git checkout $(git describe --tags $(git rev-list --tags --max-count=1))
-$ make emqx-pkg
-$ ls _packages/emqx
-```
+# Configuration
+The following table lists the configurable parameters of the emqx chart and their default values.
 
-## Build docker image
-```shell
-$ git clone https://github.com/emqx/emqx-rel.git emqx-rel
-$ cd emqx-rel
-$ git checkout $(git describe --tags $(git rev-list --tags --max-count=1))
-$ TARGET=emqx/emqx make docker
-```
-
-## Build on Windows
-
-```powershell
-git clone -b v4.0.0 https://github.com/emqx/emqx-rel.git emqx-rel
-cd emqx-rel
-make
-cd _build\emqx\rel\emqx
-bin\emqx console
-```
-
-## Build with elixir plugins
-
-Modify the rebar.config.
-
-```erlang
-
-{elixir_deps,
-   [ {plugin_name, {git, "url_of_plugin", {tag, "tag_of_plugin"}}}
-   , ....
-   ....
-   ]
-}
-
-......
-......
-
-{elixir_relx_apps,
-    [ app_name1
-    , app_name2]}.
-
-```
-
-Due to the limit of the `rebar3_elixir_compile`, users have to specify all the
-dependencies of the the elixir plugin in rebar.config in emqx-rel.
-
-## Start with epmd
-
-For now, emqx starts without epmd by default. If you want to run emqx with epmd,
-you should set the environment variable $WITH_EPMD with any value you want, for example, execute `export $WITH_EPMD=true` in your shell, then run emqx, epmd will start soon afterwards.
-
-# Test
-
-```bash
-make ct
-```
-
-# License
-
-Apache License Version 2.0
-
-# Author
-
-EMQ X Team.
+| Parameter  | Description | Default Value |
+| ---        |  ---        | ---           |
+| `replicaCount` | It is recommended to have odd number of nodes in a cluster, otherwise the emqx cluster cannot be automatically healed in case of net-split. |3|
+| `image.repository` | EMQ X Image name |emqx/emqx|
+| `image.pullPolicy`  | The image pull policy  |IfNotPresent|
+| `image.pullSecrets `  | The image pull secrets  |`[]` (does not add image pull secrets to deployed pods)|
+| `persistence.enabled` | Enable EMQX persistence using PVC |false|
+| `persistence.storageClass` | Storage class of backing PVC |`nil` (uses alpha storage class annotation)|
+| `persistence.existingClaim` | EMQ X data Persistent Volume existing claim name, evaluated as a template |""|
+| `persistence.accessMode` | PVC Access Mode for EMQX volume |ReadWriteOnce|
+| `persistence.size` | PVC Storage Request for EMQX volume |20Mi|
+| `initContainers` | Containers that run before the creation of EMQX containers. They can contain utilities or setup scripts. |`{}`|
+| `resources` | CPU/Memory resource requests/limits |{}|
+| `nodeSelector` | Node labels for pod assignment |`{}`|
+| `tolerations` | Toleration labels for pod assignment |`[]`|
+| `affinity` | Map of node/pod affinities |`{}`|
+| `service.type`  | Kubernetes Service type. |ClusterIP|
+| `service.mqtt`  | Port for MQTT. |1883|
+| `service.mqttssl` | Port for MQTT(SSL). |8883|
+| `service.mgmt`  | Port for mgmt API. |8081|
+| `service.ws`  | Port for WebSocket/HTTP. |8083|
+| `service.wss`  | Port for WSS/HTTPS. |8084|
+| `service.dashboard`  | Port for dashboard. |18083|
+| `service.nodePorts.mqtt`  | Kubernetes node port for MQTT. |nil|
+| `service.nodePorts.mqttssl` | Kubernetes node port for MQTT(SSL). |nil|
+| `service.nodePorts.mgmt`  | Kubernetes node port for mgmt API. |nil|
+| `service.nodePorts.ws`  | Kubernetes node port for WebSocket/HTTP. |nil|
+| `service.nodePorts.wss`  | Kubernetes node port for WSS/HTTPS. |nil|
+| `service.nodePorts.dashboard`  | Kubernetes node port for dashboard. |nil|
+| `service.loadBalancerIP`  | loadBalancerIP for Service |	nil |
+| `service.loadBalancerSourceRanges` |	Address(es) that are allowed when service is LoadBalancer |	[] |
+| `service.annotations` |	Service annotations |	{}(evaluated as a template)|
+| `ingress.dashboard.enabled` |	Enable ingress for EMQX Dashboard |	false |
+| `ingress.dashboard.path` | Ingress path for EMQX Dashboard |	/ |
+| `ingress.dashboard.hosts` | Ingress hosts for EMQX Mgmt API |	dashboard.emqx.local |
+| `ingress.dashboard.tls` | Ingress tls for EMQX Mgmt API |	[] |
+| `ingress.dashboard.annotations` | Ingress annotations for EMQX Mgmt API |	{} |
+| `ingress.mgmt.enabled` |	Enable ingress for EMQX Mgmt API |	false |
+| `ingress.mgmt.path` | Ingress path for EMQX Mgmt API |	/ |
+| `ingress.mgmt.hosts` | Ingress hosts for EMQX Mgmt API |	api.emqx.local |
+| `ingress.mgmt.tls` | Ingress tls for EMQX Mgmt API |	[] |
+| `ingress.mgmt.annotations` | Ingress annotations for EMQX Mgmt API |	{} |
+| `emqxConfig` | Emqx configuration item, see the [documentation](https://hub.docker.com/r/emqx/emqx) | |
+| `emqxAclConfig` | Emqx acl configuration item, see the [documentation](https://docs.emqx.io/broker/latest/en/advanced/acl-file.html) | |
